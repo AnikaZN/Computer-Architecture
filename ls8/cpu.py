@@ -17,6 +17,19 @@ class CPU:
     def ram_write(self, value, address):
         self.ram[address] = value
 
+    def HLT(self, ignore, ignore2):
+        self.running = False
+
+    def LDI(self, regnum, value):
+        self.pc += 1
+        self.reg[regnum] = value
+        self.pc += 2
+
+    def PRN(self, regnum, ignore):
+        self.pc += 1
+        print(self.reg[regnum])
+        self.pc += 1
+
     def load(self):
         """Load a program into memory."""
 
@@ -69,36 +82,17 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        ir = pc
+        command_dict = {1 : self.HLT,
+                        71 : self.PRN,
+                        130 : self.LDI}
 
-        operand_a = self.ram_read(self.pc + 1)
-        operand_b = self.ram_read(self.pc + 2)
+        while self.running:
 
-        while running:
-            program = self.ram[ir]
+            ir = self.ram[self.pc]
 
-            if command == '0b10000010':
-                self.LDI()
-            elif command == '0b01000111':
-                self.PRN()
-            elif command == '0b00000001':
-                self.HLT()
+            operand_a = self.ram[self.pc + 1]
+            operand_b = self.ram[self.pc + 2]
 
-    def HLT(self):
-        self.running = False
+            program = ir
 
-    def LDI(self, regnum, value):
-        reg = self.reg[regnum]
-
-        self.pc += 1
-
-        reg = value
-
-        self.pc += 1
-
-    def PRN(self, regnum):
-        reg = self.reg[regnum]
-
-        print(reg)
-
-        self.pc += 1
+            command_dict[program](operand_a, operand_b)

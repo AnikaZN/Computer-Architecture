@@ -12,7 +12,7 @@ class CPU:
         self.reg[7] = 0xF4
         self.running = True
 
-    def ram_read(self, ignore, address):
+    def ram_read(self, ignore, address, ignore2):
         return self.ram[address]
 
     def ram_write(self, ignore, value, address):
@@ -45,6 +45,20 @@ class CPU:
         self.reg[7] += 1
         self.pc += 2
 
+    def CALL(self, ignore, operand_a, operand_b):
+        address = self.reg[operand_a]
+        return_address = self.pc + 2
+        self.reg[7] -= 1
+        sp = self.reg[7]
+        self.ram[sp] = return_address
+        self.pc = address
+
+    def RET(self, ignore, ignore2, ignore3):
+        sp = self.reg[7]
+        return_address = self.ram[sp]
+        self.reg[7] += 1
+        self.pc = return_address
+
     def load(self):
         """Load a program into memory."""
 
@@ -62,7 +76,6 @@ class CPU:
 
                     if possible_num[0] == '1' or possible_num[0] == '0':
                         num = possible_num[:8]
-                        #print(f'{num}: {int(num, 2)}')
 
                         self.ram[address] = int(num, 2)
                         address += 1
@@ -75,6 +88,7 @@ class CPU:
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
+            self.pc += 3
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
             self.pc += 3
@@ -105,10 +119,13 @@ class CPU:
     def run(self):
         """Run the CPU."""
         command_dict = {1 : self.HLT,
+                        17 : self.RET,
                         69 : self.PUSH,
                         70 : self.POP,
                         71 : self.PRN,
+                        80 : self.CALL,
                         130 : self.LDI,
+                        160 : self.alu,
                         162 : self.alu}
 
         while self.running:
@@ -118,7 +135,10 @@ class CPU:
             operand_a = self.ram[self.pc + 1]
             operand_b = self.ram[self.pc + 2]
 
-            if ir == 162:
+            if ir == 160:
+                program = ir
+                op = "ADD"
+            elif ir == 162:
                 program = ir
                 op = "MUL"
             else:

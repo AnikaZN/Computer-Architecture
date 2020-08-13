@@ -8,6 +8,8 @@ PRINT_REGISTER = 0b00000101
 ADD = 0b00000110
 PUSH = 0b01000111
 POP = 0b01001000
+CALL = 0b01001001
+RET = 0b00001010
 
 memory = [None] * 256
 
@@ -99,9 +101,26 @@ while running:
         registers[7] += 1
         program_counter += 1
 
+    elif command == CALL:
+        # Set up RET by grabbing the spot to return to
+        next_address = program_counter + 2
+        registers[7] -= 1
+        sp = registers[7]
+        memory[sp] = next_address
+        # Go to where the function is stored
+        reg_address = memory[program_counter + 1]
+        jump_to = registers[reg_address]
+        program_counter = jump_to
+
+    elif command == RET:
+        sp = registers[7]
+        return_address = memory[sp]
+        registers[7] += 1
+        program_counter = return_address
+
     elif command == HALT:
         running = False
 
     else:
         print('Command not recognized!')
-        break()
+        break
